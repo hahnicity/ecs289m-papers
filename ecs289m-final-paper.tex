@@ -1,0 +1,59 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1.0in]{geometry}
+
+\usepackage[]{cite}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage[]{array}
+\usepackage[]{bm}
+
+% standard packages that must be loaded after hyperref
+\usepackage{lipsum}
+\usepackage[auth-lg]{authblk}
+\usepackage{bookmark}
+\usepackage[final]{listings}
+\usepackage{lscape}
+\usepackage{mathtools}
+\usepackage{paralist}
+\usepackage{flushend}
+\usepackage{ctable}
+\usepackage[]{xcolor}
+\usepackage{booktabs}
+
+\begin{document}
+
+\title{MEG: The Email Mobile Encryption Gateway}
+
+\author{Gregory Rehm} \author{Michael Thompson} \author{Brad Busenius} \author{Jennifer Fowler}
+
+\affil{\normalsize{University of California, Davis}, \{\normalsize{Argonne National Laboratory} \texttt{grehm@ucdavis.edu \{thompsonm,bbusenius,jfowler\}@anl.gov}}
+
+\maketitle
+
+\begin{abstract}
+\par Email cryptography has long been considered a problem that was too hard to practically solve. MEG, or the Mobile Encryption Gateway aims to solve many of the problems associated with email encryption by making it secure yet easy to perform. MEG will perform automatic decryption and encryption of all emails using allowing users to not worry about the internal workings of how encryption works. MEG is meant to be email client agnostic enabling users to use any mail service they desire to send messages. Most importantly MEG is end-to-end encrypted ensuring that the users information stays private only to them. As a result we hope that MEG will finally provide users with the solution they need to encrypt their emails as easily as they send unencrypted mail.
+\end{abstract}
+\section{Introduction}
+\par Cryptographically secure email has seen many approaches attempting to make it widely available yet for varied reasons all attempts have either failed or have not reached widespread adoption. The most common issue reported is users have difficulty using encryption technologies without specialized training. And even with special training most average users still fail at encrypting their email\cite{whitten1999johnny}. Other detractions from the widespread usability of encryption include the inability to verify the identity of contacts, a lack of end to end encryption, network effects, and payment being required for services rendered.
+\par To solve this problem we propose MEG as a secure, trustworthy, free, and usable alternative to all other previously devised technologies. First we show why previous attempts to widely encrypt email have failed. We then show how MEG aims to address all these deficiencies. Next we show that the MEG architecture enables us to create a secure, end to end encrypted system that is email client agnostic; enabling users to keep their email provider by installing an additional plugin for their browser or mail application. Finally we discuss MEGs usability characteristics and how it enables users to perform all necessary actions to securely encrypt messages without forcing users to perform lower level details about how to accomplish the task.
+\section{Background}
+\par Underneath the majority of the communications performed on the internet today is encryption. Encryption ensures that our bank records remain private to snooping eyes and that our store purchases stay secret. The basis for encryption technology on the internet dates back to 1976 when Diffie and Hellman proposed public key cryptography. Since then encryption has slowly increased in relevance to electronic communications until the 2013 Snowden revelations exploded and showed just how vulnerable our data is to prying eyes. Since then there has been a flurry of activity towards encrypting all communications over the internet; and yet three years later, email still remains largely unencrypted.
+\subsection{S/MIME}
+\par The reigning standard of email encryption is S/MIME. S/MIME has the ability to perform end to end encryption for email and is backed by CA's that are able to validate the indentity of who we are communicating with. The problem with S/MIME is the issue of certificate creation. Creation of X.509 certificates is a centralized process imposed by the CAs\cite{garfinkel2005johnny}. The CAs charge expense for their services, anathema to many users used to free services. In addition the process of obtaining a certificate can take days if not weeks. Even if a user is willing to go through the trouble of obtaining a certificate network effects must be taken into account. If a mail recipient does not have an S/MIME certificate themselves then email cannot be encrypted. There exist email services like Hushmail that offer to simplify this process but payment is required by users and often their code is unauditable and we cannot ensure that it is end to end encrypted. Corporations often provide this service for their employees as well but this only ensures encryption will occur between memebers of the same corporation but not necessarily with parties outside the corporate boundaries.
+\par The best attempt yet to fix the deficiencies with S/MIME is named Key Continuity Management (KCM) by Simson Garfinkel and offered to provide automated generation of self signing S/MIME certificates\cite{garfinkel2005johnny}. Theoretically this would mean anyone could generate an S/MIME certificate for free and instantaneously. In this manner, network effects could slowly be resolved over time. However many mail providers do not accept self signed certificates because they are a security vulnerability. Their main problem is that you cannot verify the identity of a person with a self signed certificate. Garfinkel later tried to argue that if you could let users determine whether to trust the host the message is coming from similar to the way SSH works\cite{garfinkel2005make}. However this does not constitute a feasible solution to the problem. Asking the user to understand their security risk is unreasonable. The vast majority of users do not understand the purpose of self signed certificates\cite{downs2006decision}. When study participants were prompted with security devisions in a study on HTTPS on whether or not to accept deubious certificates users frequently chose to accept them\cite{callegati2009man}. In fact, according to Downs a likely way to spoof identity would just be to impersonate a company the user does business with\cite{downs2006decision}. It is because of this that major mail clients do not even accept the use of self signed certificates, viewing them as insecure\cite{force-use-of-self,ars-postfix}. Furthermore KCM could place users at greater security risk for attacks like phishing given that they trade provider built-in security filtering for encrypted mail.
+\subsection{Native PGP}
+\par The main alternative to S/MIME is to use PGP. In contrast to X.509 PGP is decentralized. PGP is able to validate identity through a concept named web of trust.In practical terms web of trust works through key signing. If a friend of yours that you trust has signed the key of another person, then web of trust would state that you should trust the identity of that other person\cite{zimmermann1995official}. Assuming that a user has properly performed their web of trust PGP is just as secure as S/MIME and is able to validate the identity of the participants in a communication\cite{furnell2013usable}.
+\par Despite advantages of being decentralized and free, PGP is notoriously difficult to use. In a famous study name \textit{Why Johnny Can't Encrypt} researchers found that most study participants couldn't even encrypt their emails using GUI tools for simplifying PGP actions. The few that were able to encrypt their communications were prone to displaying their private key in plaintext, defeating the entire purpose of encryption\cite{whitten1999johnny}. Followup studies with improved PGP GUI tools have had no more success with study partipantsthan the original trial\cite{sheng2006johnny}. Once again there exist paid services to automate PGP but they too suffer from lack of end to end encryption and have unauditable code\cite{ciphermail-gateway,hushmail,eff-scorecard}. Most importantly these services charge money meaning widespread adoption will not occur. There does exist free, open source email encryption application using PGP named OpenKeychain. It is superb for usability and accessibility but it requires a user to use a special email client and disallows use of clients that the user has grown accustomed to\cite{openkeychain}.
+\subsection{MEG}
+\par MEG aims to address many of the problems that stem from using PGP, S/MIME, and mail provider based encryption schemes. First and foremost MEG aims to use PGP because it is free, decentralized, and can validate contact identity using web of trust. MEG however aims to alleviate the usability headaches surrounding PGP by automating the entire process of key generation, signing keys, encryption, and decryption of messages for the user. This way the user gets to enjoy encryption for their emails while not having to worry about the low level details of how it works thereby eliminating the problems encountered in \textit{Why Johnny Can't Encrypt}\cite{whitten1999johnny}.
+\par MEG will ensure user data stays private. End to end encryption will be built into MEG on any part where it is necessary. A users private key will stay on their phone. This way no one except the owner of the phone will have the ability to decrypt messages. The actual encryption of emails will be provided as a service by a mobile phone with the MEG Android app on a mobile device serving as the email gateway. MEG will then relay the email over a secure channel back to the user's mail client which can forward the email to its intended destination.
+
+\section{Architecture}
+
+\section{Conclusion}
+\par MEG is a free mail client agnostic encryption application that automates the hassles of email encryption. MEG ensures that users do not have to worry about the details of securing their messages. These characteristics mean that MEG will be both more secure and more accessible than other email encryption schemes. MEG has the benefit of being able to learn from its predecessors. We have the ability to understand where previous schemes such as KCM failed. And we also have the benefit of being able to use the ubiquity of smartphones to serve as email gateways. We believe that security does not have to be a hassle for average users. It is rather just a matter of engineering the correct solution that average people can use. We believe for email encryption that MEG is that solution.
+\bibliographystyle{plain}
+\bibliography{ecs289m-final-paper.bib}
+\end{document}
